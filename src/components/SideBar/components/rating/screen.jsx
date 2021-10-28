@@ -1,11 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import * as S from '../../styled';
 import { HOST_API, SIDEBAR_TITLE } from '../../../../constants/index.js'
+import { useDispatch, useSelector } from 'react-redux';
+import { getIdRatingSelect, getRating } from '../../sidebarSlice';
 
-function Ratings(props) {
-    const { handleGetRatings, idCategory, idDetailCategory, idSubCategory, idType, idBrand } = props;
-    const [rating, setRating] = useState([])
+function Ratings() {
     const [products, setProducts] = useState([])
+
+    const dispatch = useDispatch()
+    const dataRating = useSelector(state => state.sidebar.allRating)
+    const idCategory = useSelector(state => state.sidebar.idCategorySelect)
+    const idDetailCategory = useSelector(state => state.sidebar.idDetailCategorySelect)
+    const idSubCategory = useSelector(state => state.sidebar.idSubCategorySelect)
+    const idType = useSelector(state => state.sidebar.idTypeSelect)
+    const idBrand = useSelector(state => state.sidebar.idBrandSelect)
 
     const handleShowRating = (rating) => {
         let result = []
@@ -19,19 +27,7 @@ function Ratings(props) {
     }
 
     useEffect(() => {
-        function getRatings() {
-            const url = `${HOST_API}/ratings${idCategory ? `?category_id=${idCategory}` : ''}`;
-            const option = {
-                method: 'GET',
-                mode: 'cors',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            }
-            fetch(url, option)
-                .then(response => response.json())
-                .then(data => { setRating(data) })
-        }
+        dispatch(getRating(idCategory))
 
         const getCountProduct = () => {
             const url = `${HOST_API}/products?${idCategory ? `category=${idCategory}` : ''}${idDetailCategory ? `&detail_category=${idDetailCategory}` : ''}${idSubCategory ? `&sub_category=${idSubCategory}` : ''}${handleTypeChecked(idType)}${handleBrandsChecked(idBrand)}`;
@@ -49,12 +45,11 @@ function Ratings(props) {
         }
 
         getCountProduct()
-        getRatings()
-    }, [idCategory, idBrand, idType, idDetailCategory, idSubCategory])
+    }, [idCategory, idBrand, idType, idDetailCategory, idSubCategory, dispatch])
 
     const handleTotalProduct = (id) => {
         let number = 0
-        products.length && products.map((product) => {
+        products.length && products.forEach((product) => {
             if (product.rating === id) number += 1
         })
         return number
@@ -79,12 +74,12 @@ function Ratings(props) {
     return (
         <>
             <S.TitleChild>{SIDEBAR_TITLE.ratings}</S.TitleChild>
-            {rating.map((item, index) => {
+            {dataRating.length && dataRating.map((item, index) => {
                 const { id, rating } = item;
                 return (
                     <S.TitleItem
                         key={index}
-                        onClick={() => handleGetRatings(id)}
+                        onClick={() => dispatch(getIdRatingSelect(id))}
                     >
                         {handleShowRating(rating)}
                         ({handleTotalProduct(index + 1)})

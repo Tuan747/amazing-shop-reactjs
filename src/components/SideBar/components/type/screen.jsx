@@ -1,25 +1,22 @@
 import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { HOST_API, SIDEBAR_TITLE } from '../../../../constants';
+import { getIdTypeSelect, getTypes } from '../../sidebarSlice';
 import * as S from '../../styled';
 
-function Type(props) {
-    const { handleGetType, idCategory, idBrand, idDetailCategory, idSubCategory, idRating } = props
-    const [itemType, setItemType] = useState([])
+function Type() {
     const [products, setProducts] = useState([])
+    const dispatch = useDispatch()
+    const dataTypes = useSelector(state => state.sidebar.allType)
+    const idCategory = useSelector(state => state.sidebar.idCategorySelect)
+    const idDetailCategory = useSelector(state => state.sidebar.idDetailCategorySelect)
+    const idSubCategory = useSelector(state => state.sidebar.idSubCategorySelect)
+    const idRating = useSelector(state => state.sidebar.idRatingSelect)
+    const idBrand = useSelector(state => state.sidebar.idBrandSelect)
 
     useEffect(() => {
-        const getType = () => {
-            const url = `${HOST_API}/types${idCategory ? `?category_id=${idCategory}` : ''}`;
-            const option = {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            }
-            fetch(url, option)
-                .then(response => response.json())
-                .then(data => { setItemType(data) })
-        }
+        dispatch(getTypes(idCategory))
 
         const getCountProduct = () => {
             const url = `${HOST_API}/products?${idCategory ? `category=${idCategory}` : ''}${idDetailCategory ? `&detail_category=${idDetailCategory}` : ''}${idSubCategory ? `&sub_category=${idSubCategory}` : ''}${idRating ? `&rating=${idRating}` : ''}${handleBrandsChecked(idBrand)}`;
@@ -35,12 +32,11 @@ function Type(props) {
         }
 
         getCountProduct()
-        getType()
-    }, [idCategory, idBrand, idDetailCategory, idSubCategory, idRating])
+    }, [idCategory, idBrand, idDetailCategory, idSubCategory, idRating, dispatch])
 
     const handleTotalProduct = (id) => {
         let number = 0
-        products.length && products.map((product) => {
+        products.length && products.forEach((product) => {
             if (product.type === id) number += 1
         })
         return number
@@ -57,7 +53,7 @@ function Type(props) {
     return (
         <>
             <S.TitleChild>{SIDEBAR_TITLE.type}</S.TitleChild>
-            {itemType?.length && itemType.map(data => {
+            {dataTypes?.length && dataTypes.map(data => {
                 return (
                     data.type.map((item, index) => {
                         const { id, name } = item
@@ -66,7 +62,7 @@ function Type(props) {
                                 <input
                                     type="checkbox"
                                     id={name}
-                                    onChange={() => handleGetType(id)} />
+                                    onChange={() => dispatch(getIdTypeSelect(id))} />
                                 <label htmlFor={name}>{name}</label>
                                 ({handleTotalProduct(index + 1)})
                             </S.InputForm>

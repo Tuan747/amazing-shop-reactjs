@@ -66,3 +66,7 @@ export const ProductRating = styled.div`
     margin-bottom: 10px;
     color: yellow;
 `;
+
+export const TotalProducts = styled.div`
+    margin: .5%;
+`

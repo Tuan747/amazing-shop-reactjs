@@ -1,53 +1,47 @@
 import React, { useState, useEffect } from 'react';
 import * as S from '../../styled';
-import { HOST_API, SIDEBAR_TITLE } from '../../../../constants/index.js'
+import { SIDEBAR_TITLE } from '../../../../constants/index.js'
+import { useDispatch, useSelector } from 'react-redux';
+import { getCategory, getIdCategorySelect, getIdDetailCategorySelect, getIdSubCategorySelect } from '../../sidebarSlice';
 
-function Category(props) {
-    const { category, detail_category, sub_category } = props
+function Category() {
     const [subNav1, setSubNav1] = useState()
     const [subNav2, setSubNav2] = useState()
-    const [itemCategory, setItemCategory] = useState([])
+    const dispatch = useDispatch()
+    const dataCategory = useSelector(state => state.sidebar.allCategory)
+    const idCategory = useSelector(state => state.sidebar.idCategorySelect)
+    const idDetailCategory = useSelector(state => state.sidebar.idDetailCategorySelect)
+    const idSubCategory = useSelector(state => state.sidebar.idSubCategorySelect)
+    const idRating = useSelector(state => state.sidebar.idRatingSelect)
+    const idBrand = useSelector(state => state.sidebar.idBrandSelect)
+
+    useEffect(() => {
+        dispatch(getCategory())
+    }, [dispatch, idCategory, idDetailCategory, idSubCategory, idRating, idBrand])
 
     const handleClickSubLv1 = (id) => {
         if (subNav1 !== id) {
             setSubNav1(id)
         }
         setSubNav2(0)
-        category(id)
+        dispatch(getIdCategorySelect(id))
     }
 
     const handleClickSubLv2 = (id) => {
         setSubNav2(id)
-        detail_category(id)
+        dispatch(getIdDetailCategorySelect(id))
     }
-
-    useEffect(() => {
-        function getCategory() {
-            const url = `${HOST_API}/categories`
-            const option = {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            }
-            fetch(url, option)
-                .then(response => response.json())
-                .then(data => setItemCategory(data))
-        }
-        getCategory()
-    }, [])
 
     return (
         <S.Nav>
             <S.Title>{SIDEBAR_TITLE.category}</S.Title>
-            {itemCategory.map((item, index) => {
+            {dataCategory && dataCategory.map((item, index) => {
                 const { id, name } = item;
                 return (
                     <div key={index}>
                         <S.TitleItem
                             key={index}
                             onClick={() => handleClickSubLv1(id)}
-                        // style={{ display: showCategories && showCategories.length ? showCategories.includes(id) ? 'block' : 'none' : 'block' }}
                         > {name}</S.TitleItem>
                         {subNav1 === index + 1 &&
                             <ul>
@@ -63,7 +57,7 @@ function Category(props) {
                                                         return (
                                                             <S.TitleItemLi
                                                                 key={index}
-                                                                onClick={() => sub_category(id)}
+                                                                onClick={() => dispatch(getIdSubCategorySelect(id))}
                                                             >{name}</S.TitleItemLi>
                                                         )
                                                     })}

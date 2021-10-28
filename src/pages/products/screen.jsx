@@ -1,71 +1,26 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Col, Row } from 'react-bootstrap';
-import PaginationNumber from '../../components/Pagination';
+import PaginationNumber from '../../components/Pagination/screen';
 import SideBar from '../../components/SideBar/screen';
-import { HOST_API } from '../../constants';
 import * as S from './styled';
-import Search from '../../components/Search';
+import Search from '../../components/Search/screen';
 import Sort from '../../components/Sort/screen';
-
-const getURLType = (type) => {
-    if (type && type.length) {
-        const url = type.map((id) => `&type=${id}`)
-        return url.join('')
-    }
-    return ''
-}
-
-const getURLBrand = (brand) => {
-    if (brand && brand.length) {
-        const url = brand.map((brand) => `&brand=${brand}`)
-        return url.join('')
-    }
-    return ''
-}
+import { useDispatch, useSelector } from 'react-redux';
+import { getProducts } from './productsSlice';
+import { NO_PRODUCT, TOTAL_PRODUCTS } from '../../constants';
 
 function Products() {
-    const [search, setSearch] = useState('')
-    const [paramURL, setParamURL] = useState({})
-    const [products, setProducts] = useState([])
-    const [sortPrice, setSortPrice] = useState('')
-    const [pagination, setPagination] = useState({
-        _page: 1,
-        _limit: 8,
-        _totalRows: 10,
-    })
-
-    const handlePageChange = (newPage) => {
-        setPagination({
-            ...pagination,
-            _page: newPage
-        })
-    }
-
-    //get pram form sidebar
-    const getParamURL = (param) => {
-        setParamURL(param)
-    }
+    const { idCategorySelect, idDetailCategorySelect, idSubCategorySelect, idTypeSelect, idRatingSelect, idBrandSelect } = useSelector(state => state.sidebar)
+    const { page, limit, totalRows } = useSelector(state => state.pagination)
+    const { sortBy } = useSelector(state => state.sort)
+    const { value } = useSelector(state => state.search)
+    const { products } = useSelector(state => state.products)
+    const dispatch = useDispatch()
 
     // fetch
     useEffect(() => {
-        const getCategory = () => {
-            const url = `${HOST_API}/products?_page=${pagination._page}&_limit=${pagination._limit}${paramURL.category ? `&category=${paramURL.category}` : ''}${paramURL.detail_category ? `&detail_category=${paramURL.detail_category}` : ''}${paramURL.sub_category ? `&sub_category=${paramURL.sub_category}` : ''}${getURLType(paramURL.type)}${getURLBrand(paramURL.brand)}${paramURL.rating ? `&rating=${paramURL.rating}` : ''}${sortPrice ? `&_sort=price&_order=${sortPrice}` : ''} `
-            const option = {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            }
-            fetch(url, option)
-                .then(response => response.json())
-                .then(data => {
-                    setProducts(data.data)
-                    setPagination(data?.pagination)
-                })
-        }
-        getCategory();
-
-    }, [paramURL, pagination._limit, pagination._page, sortPrice])
+        dispatch(getProducts())
+    }, [dispatch, sortBy, value, limit, page, idTypeSelect, idSubCategorySelect, idRatingSelect, idDetailCategorySelect, idCategorySelect, idBrandSelect])
 
     //show rating in product
     const handleShowRating = (rating) => {
@@ -79,57 +34,62 @@ function Products() {
         return result
     }
 
-    const handleSearchChange = (search) => {
-        setSearch(search);
+    const getHighlightedText = (text, highlight) => {
+        const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
+        return (
+            <span>
+                {parts.map((part, i) => {
+                    return (
+                        <span key={i} style={part.toLowerCase() === highlight.toLowerCase() ? { color: 'red' } : {}} >
+                            {part}
+                        </span>
+                    )
+                })}
+            </span >
+        )
     }
 
-    const getParamSort = (e) => {
-        setSortPrice(e.target.value);
-    }
+    const handleShowProducts =
+        (products.length > 0 &&
+            products.map((item, index) => {
+                const { img, name, price, rating } = item
+                return (
+                    <>
+                        <S.Box key={index} >
+                            <S.ImgWrapper >
+                                <S.ProductImg>
+                                    <S.Img src={img} alt={name} />
+                                </S.ProductImg>
+                            </S.ImgWrapper>
+                            <S.DescWrapper>
+                                <S.ProductName>{value ? getHighlightedText(name, value) : name}</S.ProductName>
+                                <S.ProductType ></S.ProductType>
+                                <S.ProductPrice >$ {price}</S.ProductPrice>
+                                <S.ProductRating key={index}>
+                                    {handleShowRating(rating)}
+                                </S.ProductRating>
+                            </S.DescWrapper>
+                        </S.Box>
+                    </>
+                )
+            }))
+        ||
+        <p>{NO_PRODUCT}</p>
 
     return (
         <S.SideBar>
-            <Search onSubmit={handleSearchChange} />
+            <Search />
             <Row>
-                <Col lg={2}>
-                    <SideBar getParamURL={getParamURL} />
-                </Col>
+                <Col lg={2}><SideBar /></Col>
                 <Col lg={10}>
-                    <Sort getParamSort={getParamSort} />
-                    {products && products?.filter((item) => {
-                        if (search.searchTerm === undefined) {
-                            return item
-                        } else if (item.name.toLowerCase().includes(search.searchTerm?.toLowerCase())) {
-                            return item
-                        }
-                    })
-                        .map((item, index) => {
-                            const { img, name, price, rating } = item
-                            return (
-                                < S.Box key={index} >
-                                    <S.ImgWrapper >
-                                        <S.ProductImg>
-                                            <S.Img src={img} alt={name} />
-                                        </S.ProductImg>
-                                    </S.ImgWrapper>
-                                    <S.DescWrapper>
-                                        <S.ProductName>{name}</S.ProductName>
-                                        <S.ProductType ></S.ProductType>
-                                        <S.ProductPrice >$ {price}</S.ProductPrice>
-                                        <S.ProductRating key={index}>
-                                            {handleShowRating(rating)}
-                                        </S.ProductRating>
-                                    </S.DescWrapper>
-                                </S.Box>
-                            )
-                        })
-                    }
+                    <Row>
+                        <Col lg={6}><S.TotalProducts>{TOTAL_PRODUCTS} ({totalRows})</S.TotalProducts></Col>
+                        <Col lg={6}><Sort /></Col>
+                        <Col lg={12}>{handleShowProducts}</Col>
+                    </Row>
                 </Col>
             </Row>
-            <PaginationNumber
-                onPageChange={handlePageChange}
-                pagination={pagination}
-            />
+            <PaginationNumber />
         </S.SideBar >
     );
 }

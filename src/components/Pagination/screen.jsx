@@ -1,14 +1,16 @@
 import React from 'react';
 import * as S from './style';
 import { Pagination } from 'react-bootstrap';
+import { useDispatch, useSelector } from 'react-redux';
+import { getNewPage } from './pagiSlice';
 
-function PaginationNumber(props) {
-    const { pagination, onPageChange } = props
-    const { _page, _limit, _totalRows } = pagination
-    const totalPages = Math.ceil(_totalRows / _limit)
+function PaginationNumber() {
+    const { page, limit, totalRows } = useSelector(state => state.pagination)
+    const dispatch = useDispatch()
+    const totalPages = Math.ceil(totalRows / limit)
 
     const handlePageChange = (newPage) => {
-        onPageChange && onPageChange(newPage)
+        dispatch(getNewPage(newPage))
     }
 
     let items = [];
@@ -16,7 +18,7 @@ function PaginationNumber(props) {
         items.push(
             <Pagination.Item
                 key={i}
-                active={_page === i}
+                active={page === i}
                 onClick={() => handlePageChange(i)}
             > {i}
             </Pagination.Item>,
@@ -26,15 +28,15 @@ function PaginationNumber(props) {
     return (
         <S.Pagination>
             <Pagination.Prev
-                disabled={_page <= 1}
-                onClick={() => handlePageChange(_page - 1)}
+                disabled={page <= 1}
+                onClick={() => handlePageChange(page - 1)}
             />
 
             <Pagination>{items}</Pagination>
 
             <Pagination.Next
-                disabled={_page >= totalPages}
-                onClick={() => handlePageChange(_page + 1)}
+                disabled={page >= totalPages}
+                onClick={() => handlePageChange(page + 1)}
             />
         </S.Pagination>
     );

@@ -15,3 +15,6 @@ export const SORT_PRICE = {
     "asc": "Tăng dần",
     "desc": "Giảm dần"
 }
+export const TITLE_BTN_CLEAR_SIDEBAR = "Xóa tất cả"
+export const TOTAL_PRODUCTS = "Số lượng sản phẩm"
+export const NO_PRODUCT = "Hiện tại sản phẩm không có"
